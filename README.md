@@ -6,4 +6,4 @@ strategy, portfolio, and execution components.
 
 Initial focus is on correctness and architecture before adding realism and performance metrics.
 
-![Architecture Diagram](architectures.png)
+![Architecture Diagram](Architectures.png)
