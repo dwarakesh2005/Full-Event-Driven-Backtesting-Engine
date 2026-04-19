@@ -26,8 +26,22 @@ with st.sidebar:
         start_date = st.date_input("Start", date(2020, 1, 1))
     with col2:
         end_date = st.date_input("End", date(2022, 1, 1))
+    
 
     capital = st.number_input("Initial Capital ($)", value=100000)
+    slippage = st.number_input(
+"Slippage (%)",
+min_value=0.0,
+value=0.0,
+step=0.01
+) / 100
+
+    commission = st.number_input(
+"Transaction Cost (%)",
+min_value=0.0,
+value=0.0,
+step=0.01
+) / 100
 
     selected_strategy_name = st.selectbox(
         "Select Strategy",
@@ -40,7 +54,7 @@ with st.sidebar:
 
 # ---------------- MAIN TITLE ----------------
 st.title(f" Event-Driven Backtesting Engine: {ticker}")
-st.caption("Data: Yahoo Finance | Next-bar execution at close | No transaction costs")
+st.caption("Data: Yahoo Finance | Close price execution | Includes slippage & transaction costs")
 
 
 # ---------------- RUN BACKTEST ----------------
@@ -70,11 +84,13 @@ if run:
 
         st.write("⚙️ Running event-driven simulation")
         history, trades, metrics = run_backtest(
-            strategy_class=strategy_class,
-            symbol=ticker,
-            csv_path=csv_path,
-            initial_capital=capital
-        )
+    strategy_class=strategy_class,
+    symbol=ticker,
+    csv_path=csv_path,
+    initial_capital=capital,
+    slippage=slippage,
+    commission=commission
+)
 
         status.update(label="Backtest Complete", state="complete", expanded=False)
 
