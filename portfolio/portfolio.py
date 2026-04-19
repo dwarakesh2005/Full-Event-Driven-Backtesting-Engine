@@ -51,28 +51,31 @@ class Portfolio:
             self.events.put(order)
 
     def update_fill(self, fill):
-        """
-        Updates cash and position from FillEvent.
-        """
+
+        cost = fill.quantity * fill.fill_price
+
         if fill.direction == "BUY":
-            cost = fill.quantity * fill.fill_price
-            self.cash -= cost
+            self.cash -= (cost + fill.commission)
             self.position += fill.quantity
 
         elif fill.direction == "SELL":
-            proceeds = fill.quantity * fill.fill_price
-            self.cash += proceeds
+            self.cash += (cost - fill.commission)
             self.position -= fill.quantity
+
         self.trades.append({
-"time": fill.time,
-"symbol": fill.symbol,
-"direction": fill.direction,
-"price": fill.fill_price,
-"quantity": fill.quantity,
-"cash_after": self.cash,
-"position_after": self.position
-})
+            "time": fill.time,
+            "symbol": fill.symbol,
+            "direction": fill.direction,
+            "price": fill.fill_price,
+            "quantity": fill.quantity,
+            "commission": fill.commission,
+            "cash_after": self.cash,
+            "position_after": self.position
+        })
+
         self._record_holdings(fill.time)
+     
+
 
     def _calculate_quantity(self):
         """
@@ -96,15 +99,6 @@ class Portfolio:
             "holdings": holdings_value,
             "total": total_value
         })
-
-
-
-
-
-
-
-
-
 
 
 
