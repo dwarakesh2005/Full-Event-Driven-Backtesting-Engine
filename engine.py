@@ -4,7 +4,8 @@ from portfolio.portfolio import Portfolio
 from execution.execution import SimulatedExecutionHandler
 from performance.metrics import compute_metrics
 
-def run_backtest(strategy_class, symbol, csv_path, initial_capital):
+def run_backtest(strategy_class, symbol, csv_path, initial_capital,slippage=0.0, commission=0.0):
+
 
 
     events = Queue()
@@ -12,7 +13,11 @@ def run_backtest(strategy_class, symbol, csv_path, initial_capital):
     data = CSVDataHandler(events, csv_path, symbol)
     strategy = strategy_class(events, symbol)
     portfolio = Portfolio(events, symbol, initial_capital)
-    execution = SimulatedExecutionHandler(events)
+    execution = SimulatedExecutionHandler(
+    events,
+    slippage=slippage,
+    commission=commission
+)
 
     while data.continue_backtest:
 
