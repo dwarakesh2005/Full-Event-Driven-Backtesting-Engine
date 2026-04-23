@@ -91,16 +91,16 @@ Create a new file inside the `strategy/` folder:
 strategy/my_strategy.py
 ```
 
----
+
 
 ### Step 2: Use This Template
-
+```
 from collections import deque
 from events.events import SignalEvent
 
 class MyStrategy:
 
-```
+
 def __init__(self, events, symbol, **params):
     self.events = events
     self.symbol = symbol
