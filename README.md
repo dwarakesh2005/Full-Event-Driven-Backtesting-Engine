@@ -95,38 +95,49 @@ strategy/my_strategy.py
 
 ### Step 2: Use This Template
 
-```
 from collections import deque
 from events.events import SignalEvent
 
 class MyStrategy:
 
-    def __init__(self, events, symbol):
-        self.events = events
-        self.symbol = symbol
+```
+def __init__(self, events, symbol, **params):
+    self.events = events
+    self.symbol = symbol
 
-        self.prices = deque(maxlen=20)
+    # ---- PARAMETERS ----
+    self.window = params.get("window", 20)
+
+    # ---- STATE ----
+    self.prices = deque(maxlen=self.window)
+    self.in_market = False
+
+def calculate_signals(self, event):
+
+    if event.symbol != self.symbol:
+        return
+
+    self.prices.append(event.close)
+
+    if len(self.prices) < self.window:
+        return
+
+    # ---- STRATEGY LOGIC ----
+    if not self.in_market:
+        self.events.put(SignalEvent(self.symbol, event.time, "LONG"))
+        self.in_market = True
+
+    elif self.in_market:
+        self.events.put(SignalEvent(self.symbol, event.time, "EXIT"))
         self.in_market = False
 
-    def calculate_signals(self, event):
-
-        if event.symbol != self.symbol:
-            return
-
-        self.prices.append(event.close)
-
-        if len(self.prices) < 20:
-            return
-
-        # ---- STRATEGY LOGIC ----
-        if not self.in_market:
-            self.events.put(SignalEvent(self.symbol, event.time, "LONG"))
-            self.in_market = True
-
-        elif self.in_market:
-            self.events.put(SignalEvent(self.symbol, event.time, "EXIT"))
-            self.in_market = False
+@staticmethod
+def parameter_grid():
+    return {
+        "window": [10, 20, 50]
+    }
 ```
+
 
 ---
 
