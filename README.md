@@ -9,7 +9,7 @@ Initial focus is on correctness and architecture before adding realism and perfo
 ![Architecture Diagram](Architectures.png)
 
 
-## Assumptions of Backtesting Engine
+## Assumptions of this Backtesting Engine
 
 ### Market & Data Assumptions
 
