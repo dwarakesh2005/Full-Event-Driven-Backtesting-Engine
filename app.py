@@ -8,12 +8,16 @@ from datetime import date
 from strategy.register import load_strategies
 from engine import run_backtest
 
+
 # ---------------- PAGE CONFIG ----------------
+
 st.set_page_config(page_title="Backtesting Terminal", layout="wide")
 
 STRATEGIES = load_strategies()
 
+
 # ---------------- SIDEBAR ----------------
+
 with st.sidebar:
     st.header("Strategy Control")
 
@@ -60,18 +64,21 @@ with st.sidebar:
             )
 
     st.divider()
-    run = st.button("EXECUTE BACKTEST", width="stretch", type="primary")
+    run = st.button("EXECUTE BACKTEST", use_container_width=True, type="primary")
+
 
 # ---------------- MAIN ----------------
-st.title(f"Event-Driven Backtesting Engine: {ticker}")
-st.caption("Yahoo Finance | Next-bar execution | Includes slippage & costs")
 
-# 🔥 STOP if not run (fixes NameError)
+st.title(f"Event-Driven Backtesting Engine: {ticker}")
+st.caption("Yahoo Finance | Event-driven execution | Transaction costs included")
+
 if not run:
-    st.info("👈 Configure settings and click EXECUTE BACKTEST")
+    st.info("Configure parameters and click EXECUTE BACKTEST")
     st.stop()
 
-# ---------------- RUN ENGINE ----------------
+
+# ---------------- RUN BACKTEST ----------------
+
 strategy_class = STRATEGIES[selected_strategy_name]
 
 with st.status("Running backtest...", expanded=True):
@@ -106,7 +113,9 @@ with st.status("Running backtest...", expanded=True):
         split_ratio=split_ratio
     )
 
-# ---------------- DATA ----------------
+
+# ---------------- DATA PREPARATION ----------------
+
 history_df = pd.DataFrame(history)
 trades_df = pd.DataFrame(trades)
 
@@ -114,19 +123,19 @@ if history_df.empty:
     st.warning("No results")
     st.stop()
 
-# 🔥 FIX: timestamp normalization (IMPORTANT)
-history_df["time"] = pd.to_datetime(history_df["time"]).dt.tz_localize(None).dt.floor("s")
-data["Date"] = pd.to_datetime(data["Date"]).dt.tz_localize(None).dt.floor("s")
+history_df["time"] = pd.to_datetime(history_df["time"]).astype("datetime64[ns]")
+data["Date"] = pd.to_datetime(data["Date"]).astype("datetime64[ns]")
 
 if not trades_df.empty:
-    trades_df["time"] = pd.to_datetime(trades_df["time"]).dt.tz_localize(None).dt.floor("s")
+    trades_df["time"] = pd.to_datetime(trades_df["time"]).astype("datetime64[ns]")
 
-    # Arrow fix
     for col in trades_df.columns:
         if trades_df[col].apply(lambda x: isinstance(x, dict)).any():
             trades_df[col] = trades_df[col].astype(str)
 
-# ---------------- KPI ----------------
+
+# ---------------- METRICS ----------------
+
 final_val = history_df["total"].iloc[-1]
 start_val = history_df["total"].iloc[0]
 roi = (final_val - start_val) / start_val * 100
@@ -134,10 +143,12 @@ roi = (final_val - start_val) / start_val * 100
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Final Balance", f"${final_val:,.2f}", f"{roi:.2f}%")
 c2.metric("Trades", len(trades_df))
-c3.metric("Sharpe", f"{metrics.get('Sharpe Ratio', 0):.2f}")
-c4.metric("Drawdown", f"{metrics.get('Max Drawdown %', 0):.2f}%")
+c3.metric("Sharpe Ratio", f"{metrics.get('Sharpe Ratio', 0):.2f}")
+c4.metric("Max Drawdown", f"{metrics.get('Max Drawdown %', 0):.2f}%")
+
 
 # ---------------- TABS ----------------
+
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Price & Equity",
     "Trades",
@@ -146,7 +157,9 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Timeline"
 ])
 
-# TAB 1
+
+# ---------------- TAB 1 ----------------
+
 with tab1:
     data["MA20"] = data["Close"].rolling(20).mean()
 
@@ -165,8 +178,8 @@ with tab1:
     fig.add_trace(go.Scatter(
         x=data["Date"],
         y=data["MA20"],
-        line=dict(color="#ffd54f"),
-        name="MA20"
+        name="MA20",
+        line=dict(color="#ffd54f")
     ))
 
     if not trades_df.empty:
@@ -209,16 +222,20 @@ with tab1:
         xaxis_rangeslider_visible=True
     )
 
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("Equity Curve")
     st.line_chart(history_df.set_index("time")["total"])
 
-# TAB 2
-with tab2:
-    st.dataframe(trades_df, width="stretch")
 
-# TAB 3
+# ---------------- TAB 2 ----------------
+
+with tab2:
+    st.dataframe(trades_df, use_container_width=True)
+
+
+# ---------------- TAB 3 ----------------
+
 with tab3:
     clean_metrics = {
         k: round(v, 4) if isinstance(v, float) else v
@@ -232,12 +249,16 @@ with tab3:
         st.subheader("Best Parameters")
         st.json(best_params)
 
-# TAB 4
+
+# ---------------- TAB 4 ----------------
+
 with tab4:
     st.write(f"Start: ${start_val:,.2f}")
     st.write(f"End: ${final_val:,.2f}")
 
-# TAB 5
+
+# ---------------- TAB 5 ----------------
+
 with tab5:
     fig = go.Figure()
 
@@ -275,4 +296,4 @@ with tab5:
             marker=dict(symbol="triangle-down", color="red")
         ))
 
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, use_container_width=True)
