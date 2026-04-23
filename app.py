@@ -259,25 +259,41 @@ with tab4:
 
 # ---------------- TAB 5 ----------------
 
+# ---------------- TAB 5 (TRADE TIMELINE) ----------------
+
 with tab5:
+
+    st.subheader("Trade Timeline")
+
     fig = go.Figure()
 
+    # ---- PRICE CANDLES ----
     fig.add_trace(go.Candlestick(
         x=data["Date"],
         open=data["Open"],
         high=data["High"],
         low=data["Low"],
-        close=data["Close"]
+        close=data["Close"],
+        name="Price",
+        increasing_line_color="#26a69a",
+        decreasing_line_color="#ef5350"
     ))
 
+    # ---- TRADES OVERLAY ----
     if not trades_df.empty:
+
+        trades_sorted = trades_df.sort_values("time")
+        data_sorted = data.sort_values("Date")
+
         merged = pd.merge_asof(
-            trades_df.sort_values("time"),
-            data.sort_values("Date"),
+            trades_sorted,
+            data_sorted,
             left_on="time",
             right_on="Date",
             direction="nearest"
         )
+
+        merged = merged.dropna(subset=["Close"])
 
         buys = merged[merged["direction"] == "BUY"]
         sells = merged[merged["direction"] == "SELL"]
@@ -285,15 +301,54 @@ with tab5:
         fig.add_trace(go.Scatter(
             x=buys["Date"],
             y=buys["Close"],
-            mode="markers",
-            marker=dict(symbol="triangle-up", color="lime")
+            mode="markers+text",
+            text=["BUY"] * len(buys),
+            textposition="top center",
+            marker=dict(
+                symbol="triangle-up",
+                size=14,
+                color="#00ff9f",
+                line=dict(width=1, color="white")
+            ),
+            name="BUY"
         ))
 
         fig.add_trace(go.Scatter(
             x=sells["Date"],
             y=sells["Close"],
-            mode="markers",
-            marker=dict(symbol="triangle-down", color="red")
+            mode="markers+text",
+            text=["SELL"] * len(sells),
+            textposition="bottom center",
+            marker=dict(
+                symbol="triangle-down",
+                size=14,
+                color="#ff4d4d",
+                line=dict(width=1, color="white")
+            ),
+            name="SELL"
         ))
+
+    # ---- CHART LAYOUT ----
+    fig.update_layout(
+        template="plotly_dark",
+        height=700,
+        margin=dict(l=10, r=10, t=30, b=10),
+
+        hovermode="x unified",
+
+        xaxis=dict(
+            showgrid=False,
+            rangeslider=dict(visible=True),
+            showspikes=True,
+            spikemode="across",
+            spikesnap="cursor"
+        ),
+
+        yaxis=dict(
+            title="Price",
+            showgrid=True,
+            gridcolor="rgba(255,255,255,0.08)"
+        )
+    )
 
     st.plotly_chart(fig, use_container_width=True)
